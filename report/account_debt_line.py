@@ -2,20 +2,22 @@ from odoo import tools, models, fields, api, _
 from odoo.tools import float_is_zero
 from odoo.exceptions import UserError
 from ast import literal_eval
+import logging
 
+_logger = logging.getLogger(__name__)
 
 class AccountDebtLine(models.Model):
     _name = "account.debt.line"
     _description = "Account Debt Line"
     _auto = False
-    _rec_name = 'document_number'
-    _order = 'date asc, date_maturity asc, document_number asc, id'
+    _rec_name = 'name'
+    _order = 'date asc, date_maturity asc, name asc, id'
     _depends = {
         'res.partner': [
             'user_id',
         ],
         'account.move': [
-            'l10n_latam_document_type_id', 'document_number',
+            'l10n_latam_document_type_id', 'name',
         ],
         'account.move.line': [
             'account_id', 'debit', 'credit', 'date_maturity', 'partner_id',
@@ -34,10 +36,10 @@ class AccountDebtLine(models.Model):
         'Tipo Documento',
         readonly=True
     )
-    document_number = fields.Char(
-        readonly=True,
-        string='Nro Documento',
-    )
+    # document_number = fields.Char(
+    #     readonly=True,
+    #     string='Nro Documento',
+    # )
     type = fields.Selection(selection=[
             ('entry', 'Journal Entry'),
             ('out_invoice', 'Customer Invoice'),
@@ -126,14 +128,14 @@ class AccountDebtLine(models.Model):
     )
 
     # computed fields
-    financial_amount = fields.Monetary(
-        compute='_compute_move_lines_data',
-        currency_field='company_currency_id',
-    )
-    financial_amount_residual = fields.Monetary(
-        compute='_compute_move_lines_data',
-        currency_field='company_currency_id',
-    )
+    # financial_amount = fields.Monetary(
+    #     compute='_compute_move_lines_data',
+    #     currency_field='company_currency_id',
+    # )
+    # financial_amount_residual = fields.Monetary(
+    #     compute='_compute_move_lines_data',
+    #     currency_field='company_currency_id',
+    # )
     # we get this line to make it easier to compute other lines
     # for debt lines, as we group by due date, we should have only one
     move_line_id = fields.Many2one(
@@ -180,7 +182,7 @@ class AccountDebtLine(models.Model):
         compute='_compute_move_lines_data',
     )
 
-    # TODO por ahora, y si nadie lo extraña, vamos a usar document_number
+    # TODO por ahora, y si nadie lo extraña, vamos a usar name
     # en vez de este, alternativas por si se extraña:
     # si se extraña entonces tal vez mejor restaurarlo con otro nombre
     # @api.one
@@ -211,6 +213,7 @@ class AccountDebtLine(models.Model):
         If debt_together in context then we discount payables and make
         cumulative all together
         """
+        
         for rec in self:
             # for compatibility with journal security or
             # mult-store module. We should only display debt
@@ -250,23 +253,23 @@ class AccountDebtLine(models.Model):
 
             statement = rec.move_line_ids.mapped('statement_id')
             rec.statement_id = len(statement) == 1 and statement
-            # invoices = rec.move_line_ids.mapped('invoice_id')
-            # if len(invoices) == 1:
-            #     rec.invoice_id = invoices
+            #invoices = rec.move_line_ids.mapped('invoice_id')
+            #if len(invoices) == 1:
+            #    rec.invoice_id = invoices
 
-            # payment_groups = rec.move_line_ids.mapped(
-            #     'payment_id.payment_group_id')
-            # if len(payment_groups) == 1:
-            #     rec.payment_group_id = payment_groups
+            #payment_groups = rec.move_line_ids.mapped(
+            #    'payment_id.payment_group_id')
+            #if len(payment_groups) == 1:
+            #    rec.payment_group_id = payment_groups
 
             # statements = rec.move_line_ids.mapped('statement_id')
             # if len(statements) == 1:
             #     rec.statement_id = statements
 
-            rec.financial_amount = sum(
-                rec.move_line_ids.mapped('financial_amount'))
-            rec.financial_amount_residual = sum(
-                rec.move_line_ids.mapped('financial_amount_residual'))
+            # rec.financial_amount = sum(
+            #     rec.move_line_ids.mapped('financial_amount'))
+            # rec.financial_amount_residual = sum(
+            #     rec.move_line_ids.mapped('financial_amount_residual'))
 
     #@api.model_cr
     def init(self):
@@ -286,7 +289,7 @@ class AccountDebtLine(models.Model):
                 -- necesita el over
                 -- ROW_NUMBER() OVER (ORDER BY l.partner_id, am.company_id,
                 --     l.account_id, l.currency_id, a.internal_type,
-                --     a.user_type_id, c.document_number, am.document_type_id,
+                --     a.user_type_id, c.name, am.document_type_id,
                 --     l.date_maturity) as id,
                 -- igualmente los move lines son unicos, usamos eso como id
                 max(l.id) as id,
@@ -294,9 +297,9 @@ class AccountDebtLine(models.Model):
                 max(am.date) as date,
                 %s
                 am.l10n_latam_document_type_id as document_type_id,
-                -- c.document_number as document_number,
-                am.name as document_number,
-                am.type as type,
+                -- c.name as name,
+                am.name as name,
+                am.move_type as type,
                 full_reconcile_id,
                 bool_and(l.reconciled) as reconciled,
                 -- l.blocked as blocked,
@@ -313,8 +316,8 @@ class AccountDebtLine(models.Model):
                 -- devolvemos el string_agg de am.name para no tener que
                 -- agregarlo en la clausula del group by
                 -- COALESCE(NULLIF(CONCAT(
-                --     dt.doc_code_prefix, am.document_number), ''),
-                --         string_agg(am.name, ',')) as document_number,
+                --     dt.doc_code_prefix, am.name), ''),
+                --         string_agg(am.name, ',')) as name,
 
                 string_agg(am.ref, ',') as ref,
                 --am.state as move_state,
@@ -353,9 +356,9 @@ class AccountDebtLine(models.Model):
             GROUP BY
                 l.partner_id, am.company_id, l.account_id, l.currency_id,
                 l.full_reconcile_id,
-                a.internal_type, a.user_type_id, am.name, am.type,
+                a.internal_type, a.user_type_id, am.name, am.move_type,
                 am.l10n_latam_document_type_id %s
-                -- dt.doc_code_prefix, am.document_number
+                -- dt.doc_code_prefix, am.name
         """ % params
         self._cr.execute("""CREATE or REPLACE VIEW %s as (%s
         )""" % (self._table, query))
@@ -364,6 +367,7 @@ class AccountDebtLine(models.Model):
     # que hacen exactamente esto
     def action_open_related_document(self):
         self.ensure_one()
+        
         # usamos lo que ya se usa en js para devolver la accion
         res_model, res_id, action_name, view_id = self.get_model_id_and_name()
 

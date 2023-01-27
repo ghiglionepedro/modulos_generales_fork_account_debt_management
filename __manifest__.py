@@ -21,17 +21,19 @@
     'name': 'Account Debt Management',
     'version': '13.0.1.2.0',
     'category': 'Account Reporting',
-    'author': 'Moldeo Interactive,ADHOC SA',
+    'author': 'Moldeo Interactive,ADHOC SA,¨Nähe Consulting Group',
     'license': 'AGPL-3',
     'depends': [
         'l10n_ar',
         # lo agregamos aca por simplicidad y para poder poner link al
-        # payment
+        # payment 
         'account_payment_group',
         # TODO vamos a analizar si agregamos esto o no
         # mas adelante se puede separar en otro modulo que integre
         # funcionalidad con este otro modulo
         # 'account_payment_group_document',
+        # Comentario de Matias de Nähe: ESTA VERSION FUNCIONA EN ODOO 15 COMMUNITY CON LOCALIZACION ADHOC. 
+        #Pueden faltar pulir detalles. Mande PR y los agregamos.
     ],
     'data': [
         'security/ir.model.access.csv',

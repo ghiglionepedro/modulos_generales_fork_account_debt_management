@@ -5,12 +5,13 @@
          <field name="model">account.debt.line</field>
          <field name="arch" type="xml">
             <search string="Deudas">
-                <field name="document_number"/>
+                <field name="name"/>
                 <field name="date"/>
                 <field name="date_maturity"/>
                 <field name="partner_id"/>
                 <field name="document_type_id"/>
                 <field name="company_id" groups="base.group_multi_company"/>
+                <filter name="Only_debt" string="Deuda o a favor del cliente" domain="[('amount_residual','!=',0)]" help="Solo valores de monto residual diferentes a cero"/>
                 <filter name="receivable" string="Cobrable" domain="[('internal_type','=','receivable')]" help="Receivable payments"/>
                 <filter name="payable" string="Pagable" domain="[('internal_type','=','payable')]" help="Payable payments"/>
                 <separator/>
@@ -39,7 +40,8 @@
                 <field name="date" string="Fecha"/>
                 <field name="partner_id" invisible="context.get('show_balance', False)"/>
                 <field name="company_id" groups="base.group_multi_company"/>
-                <field name="document_number"/>
+                <!--<field name="name"/>-->
+                <field name="invoice_id"/>
                 <field name="date_maturity" string="Fecha Vencimiento"/>
                 <field name="amount" string="Monto"/>
                 <field name="amount_residual" sum="Total"/>
@@ -47,7 +49,7 @@
                 <!-- <field name="balance" invisible="not context.get('show_balance', False)"/> -->
                 <field name="amount_currency" groups="base.group_multi_currency" string="Monto moneda extranjera"/>
                 <field name="amount_residual_currency" groups="base.group_multi_currency"/>
-                <field name="financial_amount_residual" sum="Total" groups="account_financial_amount.account_use_financial_amounts"/>
+                <!-- NO LO TENEMOS EN 15 <field name="financial_amount_residual" sum="Total" groups="account_financial_amount.account_use_financial_amounts"/>-->
                 <!-- no queremos mostrarlo mas, es util? -->
                 <!-- <field name="financial_amount" sum="Total" groups="account_financial_amount.account_use_financial_amounts"/> -->
                 <!-- <field name="financial_balance" invisible="not context.get('show_balance', False)" groups="account_financial_amount.account_use_financial_amounts"/> -->
@@ -84,7 +86,7 @@
                     <field name="company_currency_id" invisible="1"/>
                     <field name="currency_id" invisible="1"/>
                     <h1 class="oe_inline">
-                        <field name="document_number" class="oe_inline"/>
+                        <field name="name" class="oe_inline"/>
                     </h1>
                     <group>
                         <group>
@@ -99,7 +101,7 @@
                             <field name="amount_residual"/>
                             <field name="amount_currency" groups="base.group_multi_currency"/>
                             <field name="amount_residual_currency" groups="base.group_multi_currency"/>
-                            <field name="financial_amount_residual" attrs="{'invisible': [('currency_id', '=', False)]}" groups="account_financial_amount.account_use_financial_amounts"/>
+                            <!-- NO LO TENEMOS EN 15 <field name="financial_amount_residual" attrs="{'invisible': [('currency_id', '=', False)]}" groups="account_financial_amount.account_use_financial_amounts"/>-->
                             <field name="date"/>
                             <field name="date_maturity"/>
                             <field name="company_id" groups="base.group_multi_company"/>
@@ -117,18 +119,18 @@
          </field>
     </record>
 
-    <record id="view_account_debt_line_graph" model="ir.ui.view">
+    <!--<record id="view_account_debt_line_graph" model="ir.ui.view">
          <field name="name">account.debt.line.graph</field>
          <field name="model">account.debt.line</field>
          <field name="arch" type="xml">
             <graph string="Analisis de Deudas" type="pivot">
                 <field name="partner_id" type="row"/>
-                <field name="document_number" type="row"/>
+                <field name="name" type="row"/>
                 <field name="date" type="col"/>
                 <field name="amount" type="measure"/>
             </graph>
          </field>
-    </record>
+    </record>-->
 
     <record id="action_account_debt_line" model="ir.actions.act_window">
         <field name="name">Deudas</field>

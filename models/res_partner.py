@@ -167,7 +167,7 @@ class ResPartner(models.Model):
                                 '\n', ' ').replace('\r', ''),
                             inv_line.quantity,
                             inv_line.uom_id.name)))
-            document_number = record.document_number
+            #document_number = record.document_number
             date_maturity = record.date_maturity
             date = record.date
             currency = record.currency_id
@@ -181,7 +181,7 @@ class ResPartner(models.Model):
             financial_balance += record[financial_balance_field]
             res.append(get_line_vals(
                 date=date,
-                name=document_number,
+                name=name,
                 detail_lines=detail_lines,
                 date_maturity=date_maturity,
                 amount=amount,
